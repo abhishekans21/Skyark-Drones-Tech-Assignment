@@ -1,3 +1,4 @@
+from __future__ import print_function
 import piexif
 from os import getcwd,chdir
 from Tkinter import *
@@ -25,7 +26,7 @@ def main():
 	#Iterations depending on the number of videos
 	for i in range(num_vids):
 
-		print "Please select the folder of images for video %s"%((i+1))
+		print ("Please select the folder of images for video %s"%((i+1)))
 
 		image_dir = Tk()
 
@@ -47,7 +48,7 @@ def main():
 		for filename in glob.iglob('./*.JPG'):
 			exif_data_output=exif_data(filename)
 			all_gps_data.append(exif_data_output)
-			print(all_gps_data)
+			#print(*all_gps_data, sep="\n")
 
 		chdir(main_dir)
 
@@ -68,10 +69,23 @@ def exif_data(image_name):
 		gps_data_dms.append(float(longitude[0][0]))
 		gps_data_dms.append(float(longitude[1][0]))
 		gps_data_dms.append(float(longitude[2][0]))
+		gps_data_dd=dms_to_dd(gps_data_dms)
 
 	except:
 		print("Reached end of folder")
+		gps_data_dd=0
 
-	return gps_data_dms
+	if(gps_data_dd==0):
+		return [] 
+
+	return image_name,gps_data_dd[0],gps_data_dd[1]
+
+#Converting dms format data to dd
+def dms_to_dd(data): #this function converts gps co ordinates from dms to dd format
+
+	gps_data_dd=[]
+	gps_data_dd.append(float(data[0] + float(float(data[1] + data[2]/60)/60)))
+	gps_data_dd.append(float(data[3] + float(float(data[4] + data[5]/60)/60)))
+	return gps_data_dd[0],gps_data_dd[1]
 
 main()
