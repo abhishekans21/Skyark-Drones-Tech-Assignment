@@ -4,6 +4,7 @@ from os import getcwd,chdir
 from Tkinter import *
 import Tkinter, Tkconstants, tkFileDialog
 import glob
+import pysubs2
 
 #Helper function to get valid input
 def get_valid_input():
@@ -52,6 +53,18 @@ def main():
 
 		chdir(main_dir)
 
+		print("Please select the srt file for the video")
+
+		srt_file=Tk()
+		srt_file.withdraw()
+		srt_file.lift()
+		srt_filename=tkFileDialog.askopenfilename(initialdir = image_dir_path, title = "Select the srt subtitle file",filetypes = (("SRT File","*.srt"),("all files","*.*")))
+		srt_file.destroy()
+
+		#Get the time and coordinate from srt file
+		drone_pos_output=drone_pos(srt_filename)
+		#print(drone_pos_output)
+
 def exif_data(image_name):
 	exif_dict = piexif.load(image_name)
 	gps_data = exif_dict.pop("GPS")
@@ -72,7 +85,7 @@ def exif_data(image_name):
 		gps_data_dd=dms_to_dd(gps_data_dms)
 
 	except:
-		print("Reached end of folder")
+		print("End of file :(")
 		gps_data_dd=0
 
 	if(gps_data_dd==0):
@@ -87,5 +100,26 @@ def dms_to_dd(data): #this function converts gps co ordinates from dms to dd for
 	gps_data_dd.append(float(data[0] + float(float(data[1] + data[2]/60)/60)))
 	gps_data_dd.append(float(data[3] + float(float(data[4] + data[5]/60)/60)))
 	return gps_data_dd[0],gps_data_dd[1]
+
+#Using pysubs2 to get time and coordinates of the drone
+def drone_pos(file):
+	subs_file=pysubs2.load(file)
+	drone_lat=[]
+	drone_long=[]
+	drone_time=[]
+
+	for line in subs_file:
+		#Convert milliseconds to seconds
+		drone_time.append((int(line.start))/1000)
+		
+		#Comma seperated data
+		text=(line.text).split(',')
+		drone_lat.append(float(text[0]))
+		drone_long.append(float(text[1]))
+
+	drone_position=[drone_time,drone_lat,drone_long]
+
+	return drone_position
+
 
 main()

@@ -1,2 +1,5 @@
 # Skyark-Drones-Tech-Assignment
-Got the tkinter working,able to get exif data from the images
+1.Got the tkinter working
+2.Got exif data from the images
+3.converted dms to dd
+4.Got drone position for each second from .SRT file
