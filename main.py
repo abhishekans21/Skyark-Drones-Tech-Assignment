@@ -5,6 +5,8 @@ from Tkinter import *
 import Tkinter, Tkconstants, tkFileDialog
 import glob
 import pysubs2
+from math import sin, cos, sqrt, asin, radians
+import PIL.Image
 
 #Helper function to get valid input
 def get_valid_input():
@@ -46,12 +48,15 @@ def main():
 		all_gps_data=[]
 
 		#Iterate for all the images
-		for filename in glob.iglob('./*.JPG'):
+		for filename in glob.iglob('*.JPG'):
 			exif_data_output=exif_data(filename)
 			all_gps_data.append(exif_data_output)
 			#print(*all_gps_data, sep="\n")
 
 		chdir(main_dir)
+
+		print("Input the range in metres for which you want the nearby images")
+		dist_vid=int(get_valid_input())
 
 		print("Please select the srt file for the video")
 
@@ -65,23 +70,26 @@ def main():
 		drone_pos_output=drone_pos(srt_filename)
 		#print(drone_pos_output)
 
+		#Get image data for all images which are within range for each second
+		csv_data_all=distance_compare(drone_pos_output,all_gps_data,dist_vid)
+
+
 def exif_data(image_name):
-	exif_dict = piexif.load(image_name)
-	gps_data = exif_dict.pop("GPS")
+	gps_data_dms=[]
+	
 	try:
-		gps_data_dms=[]
-		latitude=[gps_data[2][0],gps_data[2][1],gps_data[2][2]]
-		longitude=[gps_data[4][0],gps_data[4][1],gps_data[4][2]]
+		exif_dict = piexif.load(image_name)
+		for ifd in ("0th", "Exif", "GPS", "1st"):
+			for tag in exif_dict[ifd]:
+				if piexif.TAGS[ifd][tag]["name"]=="GPSLatitude":
+					gps_data_dms.append(float((exif_dict[ifd][tag][0][0]*1.0)/exif_dict[ifd][tag][0][1]))
+					gps_data_dms.append(float((exif_dict[ifd][tag][1][0]*1.0)/exif_dict[ifd][tag][1][1]))
+					gps_data_dms.append(float((exif_dict[ifd][tag][2][0]*1.0)/exif_dict[ifd][tag][2][1]))
+				elif piexif.TAGS[ifd][tag]["name"]=="GPSLongitude":
+					gps_data_dms.append(float((exif_dict[ifd][tag][0][0]*1.0)/exif_dict[ifd][tag][0][1]))
+					gps_data_dms.append(float((exif_dict[ifd][tag][1][0]*1.0)/exif_dict[ifd][tag][1][1]))
+					gps_data_dms.append(float((exif_dict[ifd][tag][2][0]*1.0)/exif_dict[ifd][tag][2][1]))
 
-		#Latitude follows
-		gps_data_dms.append(float(latitude[0][0]))
-		gps_data_dms.append(float(latitude[1][0]))
-		gps_data_dms.append(float(latitude[2][0]))
-
-		#Longitude follows
-		gps_data_dms.append(float(longitude[0][0]))
-		gps_data_dms.append(float(longitude[1][0]))
-		gps_data_dms.append(float(longitude[2][0]))
 		gps_data_dd=dms_to_dd(gps_data_dms)
 
 	except:
@@ -90,15 +98,14 @@ def exif_data(image_name):
 
 	if(gps_data_dd==0):
 		return [] 
-
 	return image_name,gps_data_dd[0],gps_data_dd[1]
 
 #Converting dms format data to dd
 def dms_to_dd(data): #this function converts gps co ordinates from dms to dd format
 
 	gps_data_dd=[]
-	gps_data_dd.append(float(data[0] + float(float(data[1] + data[2]/60)/60)))
-	gps_data_dd.append(float(data[3] + float(float(data[4] + data[5]/60)/60)))
+	gps_data_dd.append(float(data[0] + data[1]/60.0 + data[2]/3600.0))
+	gps_data_dd.append(float(data[3] + data[4]/60.0 + data[5]/3600.0))
 	return gps_data_dd[0],gps_data_dd[1]
 
 #Using pysubs2 to get time and coordinates of the drone
@@ -114,12 +121,11 @@ def drone_pos(file):
 		
 		#Comma seperated data
 		text=(line.text).split(',')
-		drone_lat.append(float(text[0]))
-		drone_long.append(float(text[1]))
+		#print(text)
+		drone_lat.append(float(text[1]))
+		drone_long.append(float(text[0]))
 
 	drone_position=[drone_time,drone_lat,drone_long]
-
 	return drone_position
-
 
 main()
