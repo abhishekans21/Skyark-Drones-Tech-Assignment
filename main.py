@@ -6,6 +6,7 @@ import Tkinter, Tkconstants, tkFileDialog
 import glob
 import pysubs2
 from math import sin, cos, sqrt, asin, radians
+import csv
 
 
 #Helper function to get valid input
@@ -73,6 +74,9 @@ def main():
 		#Get image data for all images which are within range for each second
 		csv_data_all=distance_compare(drone_pos_output,all_gps_data,dist_vid)
 
+		#Creating csv file for the above collected result
+		write_csv_file(zip(*csv_data_all),"Output ",i)
+
 def exif_data(image_name):
 	gps_data_dms=[]
 	
@@ -81,10 +85,12 @@ def exif_data(image_name):
 		for ifd in ("0th", "Exif", "GPS", "1st"):
 			for tag in exif_dict[ifd]:
 				if piexif.TAGS[ifd][tag]["name"]=="GPSLatitude":
+					#Latitude
 					gps_data_dms.append(float((exif_dict[ifd][tag][0][0]*1.0)/exif_dict[ifd][tag][0][1]))
 					gps_data_dms.append(float((exif_dict[ifd][tag][1][0]*1.0)/exif_dict[ifd][tag][1][1]))
 					gps_data_dms.append(float((exif_dict[ifd][tag][2][0]*1.0)/exif_dict[ifd][tag][2][1]))
 				elif piexif.TAGS[ifd][tag]["name"]=="GPSLongitude":
+					#Longitude
 					gps_data_dms.append(float((exif_dict[ifd][tag][0][0]*1.0)/exif_dict[ifd][tag][0][1]))
 					gps_data_dms.append(float((exif_dict[ifd][tag][1][0]*1.0)/exif_dict[ifd][tag][1][1]))
 					gps_data_dms.append(float((exif_dict[ifd][tag][2][0]*1.0)/exif_dict[ifd][tag][2][1]))
@@ -100,7 +106,7 @@ def exif_data(image_name):
 	return image_name,gps_data_dd[0],gps_data_dd[1]
 
 #Converting dms format data to dd
-def dms_to_dd(data): #this function converts gps co ordinates from dms to dd format
+def dms_to_dd(data):
 
 	gps_data_dd=[]
 	gps_data_dd.append(float(data[0] + data[1]/60.0 + data[2]/3600.0))
@@ -126,6 +132,7 @@ def drone_pos(file):
 
 	drone_position=[drone_time,drone_lat,drone_long]
 	return drone_position
+
 #This runs two lists against each other, getting all locations in the second within range of each location of the first.
 def distance_compare(l1,l2,distance):
 	location_list=[]
@@ -166,5 +173,20 @@ def get_gps_distance(lat1,long1,lat2,long2):
 	gps_distance=2*radius_earth*float(asin(sqrt(float(sin(diff_lat/2)**2 + cos(lat_1) * cos(lat_2) * sin(diff_long/2)**2))))
 	#print(gps_distance)
 	return gps_distance
+
+#Write to csv file
+def write_csv_file(data_to_write,title,serial_number):
+
+	#Serial numbers
+	title=title+str(serial_number)
+
+	csv_file=open('%s.csv'%title,'w')
+	with csv_file:
+		writer=csv.writer(csv_file,dialect='excel')
+		writer.writerows(data_to_write)
+
+	csv_file.close()
+	current_dir=getcwd()
+	print("File saved at %s"%current_dir)
 
 main()
