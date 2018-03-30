@@ -6,7 +6,7 @@ import Tkinter, Tkconstants, tkFileDialog
 import glob
 import pysubs2
 from math import sin, cos, sqrt, asin, radians
-import PIL.Image
+
 
 #Helper function to get valid input
 def get_valid_input():
@@ -73,7 +73,6 @@ def main():
 		#Get image data for all images which are within range for each second
 		csv_data_all=distance_compare(drone_pos_output,all_gps_data,dist_vid)
 
-
 def exif_data(image_name):
 	gps_data_dms=[]
 	
@@ -127,5 +126,45 @@ def drone_pos(file):
 
 	drone_position=[drone_time,drone_lat,drone_long]
 	return drone_position
+#This runs two lists against each other, getting all locations in the second within range of each location of the first.
+def distance_compare(l1,l2,distance):
+	location_list=[]
+	image_list=[]
+
+	for i in range(len(l1[0])):
+		location_data_holder=[l1[1][i],l1[2][i]]
+		image_holder=inside_range(location_data_holder,l2,distance)
+
+		location_list.append(l1[0][i])
+		image_list.append(str(image_holder))
+	final_data=[location_list,image_list]
+
+	return final_data
+
+
+#Returns the images which are nearby the input distance
+def inside_range(main_gps,gps,distance_to_check):
+
+	inside_range=[]
+	for i in range((len(gps[0][0]))):
+		gps_distance_output=(get_gps_distance(main_gps[0],main_gps[1],gps[i][1],gps[i][2])*1000)
+
+		if(gps_distance_output<distance_to_check):
+			#print(gps_distance_output)
+			inside_range.append(str(gps[i][0]))
+
+	return inside_range
+
+#Calculating distance between two points using Haversine formula
+def get_gps_distance(lat1,long1,lat2,long2):
+
+	radius_earth=6372.8
+	lat_1=float(radians(lat1))
+	lat_2=float(radians(lat2))
+	diff_lat=float(radians(lat2-lat1))
+	diff_long=float(radians(long2-long1))
+	gps_distance=2*radius_earth*float(asin(sqrt(float(sin(diff_lat/2)**2 + cos(lat_1) * cos(lat_2) * sin(diff_long/2)**2))))
+	#print(gps_distance)
+	return gps_distance
 
 main()
