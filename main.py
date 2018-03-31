@@ -7,6 +7,7 @@ import glob
 import pysubs2
 from math import sin, cos, sqrt, asin, radians
 import csv
+import simplekml
 
 
 #Helper function to get valid input
@@ -75,7 +76,7 @@ def main():
 		csv_data_all=distance_compare(drone_pos_output,all_gps_data,dist_vid)
 
 		#Creating csv file for the above collected result
-		write_csv_file(zip(*csv_data_all),"Output ",i)
+		write_csv_file(zip(*csv_data_all),"Output " + str(i))
 
 		print("Input the vicinity distance for points of interest in metres")
 		dist_poi=int(get_valid_input())
@@ -91,7 +92,13 @@ def main():
 		csv_data_output=csv_data(csv_filename)
 		#print(csv_data_output)
 		csv_data_all=distance_compare(csv_data_output,all_gps_data,dist_poi)
-		write_csv_file(zip(*csv_data_all),"Custom ",i)
+
+		#Creating csv file for the above collected result
+		write_csv_file(zip(*csv_data_all),"Custom " + str(i))
+
+		print("KML of the drone path")
+		create_kml(zip(*all_gps_data),"Drone Flight " + str(i))
+
 
 
 def exif_data(image_name):
@@ -193,10 +200,7 @@ def get_gps_distance(lat1,long1,lat2,long2):
 	return gps_distance
 
 #Write to csv file
-def write_csv_file(data_to_write,title,serial_number):
-
-	#Serial numbers
-	title=title+str(serial_number)
+def write_csv_file(data_to_write,title):
 
 	csv_file=open('%s.csv'%title,'w')
 	with csv_file:
@@ -223,5 +227,18 @@ def csv_data(csv_file):
 	full_csv_data= [location_list,lat_list,long_list]
 
 	return full_csv_data
+
+#Use simplekml to create kml files
+def create_kml(data_to_write,title):
+
+	#.kml extension
+	title=title+".kml"
+
+	kml=simplekml.Kml()
+	for row in data_to_write:
+		kml.newpoint(name=row[0], coords=[(row[2],row[1])])
+	kml.save(title)
+	current_dir=getcwd()
+	print("File saved at %s"%current_dir)
 
 main()
