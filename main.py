@@ -64,7 +64,7 @@ def main():
 		srt_file=Tk()
 		srt_file.withdraw()
 		srt_file.lift()
-		srt_filename=tkFileDialog.askopenfilename(initialdir = image_dir_path, title = "Select the srt subtitle file",filetypes = (("SRT File","*.srt"),("all files","*.*")))
+		srt_filename=tkFileDialog.askopenfilename(title = "Select the srt subtitle file",filetypes = (("SRT File","*.srt"),("all files","*.*")))
 		srt_file.destroy()
 
 		#Get the time and coordinate from srt file
@@ -76,6 +76,23 @@ def main():
 
 		#Creating csv file for the above collected result
 		write_csv_file(zip(*csv_data_all),"Output ",i)
+
+		print("Input the vicinity distance for points of interest in metres")
+		dist_poi=int(get_valid_input())
+
+		print("Select csv file for custom points of interest")
+		csv_file=Tk()
+		csv_file.withdraw()
+		csv_file.lift()
+		csv_filename=tkFileDialog.askopenfilename(title = "Select CSV file",filetypes = (("CSV File","*.csv"),("all files","*.*")))
+		csv_file.destroy()
+
+		#Get csv data
+		csv_data_output=csv_data(csv_filename)
+		#print(csv_data_output)
+		csv_data_all=distance_compare(csv_data_output,all_gps_data,dist_poi)
+		write_csv_file(zip(*csv_data_all),"Custom ",i)
+
 
 def exif_data(image_name):
 	gps_data_dms=[]
@@ -137,9 +154,10 @@ def drone_pos(file):
 def distance_compare(l1,l2,distance):
 	location_list=[]
 	image_list=[]
-
+	#print(size(l1))
 	for i in range(len(l1[0])):
 		location_data_holder=[l1[1][i],l1[2][i]]
+		#print(location_data_holder)
 		image_holder=inside_range(location_data_holder,l2,distance)
 
 		location_list.append(l1[0][i])
@@ -154,7 +172,7 @@ def inside_range(main_gps,gps,distance_to_check):
 
 	inside_range=[]
 	for i in range((len(gps[0][0]))):
-		gps_distance_output=(get_gps_distance(main_gps[0],main_gps[1],gps[i][1],gps[i][2])*1000)
+		gps_distance_output=(get_gps_distance(main_gps[0],main_gps[1],gps[i][1],gps[i][2]))
 
 		if(gps_distance_output<distance_to_check):
 			#print(gps_distance_output)
@@ -170,7 +188,7 @@ def get_gps_distance(lat1,long1,lat2,long2):
 	lat_2=float(radians(lat2))
 	diff_lat=float(radians(lat2-lat1))
 	diff_long=float(radians(long2-long1))
-	gps_distance=2*radius_earth*float(asin(sqrt(float(sin(diff_lat/2)**2 + cos(lat_1) * cos(lat_2) * sin(diff_long/2)**2))))
+	gps_distance=2000*radius_earth*float(asin(sqrt(float(sin(diff_lat/2)**2 + cos(lat_1) * cos(lat_2) * sin(diff_long/2)**2))))
 	#print(gps_distance)
 	return gps_distance
 
@@ -188,5 +206,22 @@ def write_csv_file(data_to_write,title,serial_number):
 	csv_file.close()
 	current_dir=getcwd()
 	print("File saved at %s"%current_dir)
+
+#Get csv data from the file
+def csv_data(csv_file):
+
+	location_list=[]
+	lat_list=[]
+	long_list=[]
+	with open(csv_file) as file_to_read:
+		reader = csv.DictReader(file_to_read)
+		for row in reader:
+			location_list.append(row['asset_name'])
+			lat_list.append(float(row['latitude']))
+			long_list.append(float(row['longitude']))
+
+	full_csv_data= [location_list,lat_list,long_list]
+
+	return full_csv_data
 
 main()
