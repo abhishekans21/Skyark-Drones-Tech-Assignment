@@ -52,8 +52,6 @@ def main():
 		#Iterate for all the images
 		for filename in glob.iglob('*.JPG'):
 			exif_data_output=exif_data(filename)
-			all_gps_data.append(exif_data_output)
-			#print(*all_gps_data, sep="\n")
 
 		chdir(main_dir)
 
@@ -70,7 +68,6 @@ def main():
 
 		#Get the time and coordinate from srt file
 		drone_pos_output=drone_pos(srt_filename)
-		#print(drone_pos_output)
 
 		#Get image data for all images which are within range for each second
 		csv_data_all=distance_compare(drone_pos_output,all_gps_data,dist_vid)
@@ -90,7 +87,6 @@ def main():
 
 		#Get csv data
 		csv_data_output=csv_data(csv_filename)
-		#print(csv_data_output)
 		csv_data_all=distance_compare(csv_data_output,all_gps_data,dist_poi)
 
 		#Creating csv file for the above collected result
@@ -150,7 +146,7 @@ def drone_pos(file):
 		
 		#Comma seperated data
 		text=(line.text).split(',')
-		#print(text)
+
 		drone_lat.append(float(text[1]))
 		drone_long.append(float(text[0]))
 
@@ -161,10 +157,8 @@ def drone_pos(file):
 def distance_compare(l1,l2,distance):
 	location_list=[]
 	image_list=[]
-	#print(size(l1))
 	for i in range(len(l1[0])):
 		location_data_holder=[l1[1][i],l1[2][i]]
-		#print(location_data_holder)
 		image_holder=inside_range(location_data_holder,l2,distance)
 
 		location_list.append(l1[0][i])
@@ -182,7 +176,6 @@ def inside_range(main_gps,gps,distance_to_check):
 		gps_distance_output=(get_gps_distance(main_gps[0],main_gps[1],gps[i][1],gps[i][2]))
 
 		if(gps_distance_output<distance_to_check):
-			#print(gps_distance_output)
 			inside_range.append(str(gps[i][0]))
 
 	return inside_range
@@ -196,7 +189,7 @@ def get_gps_distance(lat1,long1,lat2,long2):
 	diff_lat=float(radians(lat2-lat1))
 	diff_long=float(radians(long2-long1))
 	gps_distance=2000*radius_earth*float(asin(sqrt(float(sin(diff_lat/2)**2 + cos(lat_1) * cos(lat_2) * sin(diff_long/2)**2))))
-	#print(gps_distance)
+
 	return gps_distance
 
 #Write to csv file
