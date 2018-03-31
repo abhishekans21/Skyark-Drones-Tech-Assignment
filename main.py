@@ -93,6 +93,8 @@ def main():
 		write_csv_file(zip(*csv_data_all),"Custom " + str(i))
 
 		print("KML of the drone path")
+
+		#KML representation
 		create_kml(zip(*all_gps_data),"Drone Flight " + str(i))
 
 
